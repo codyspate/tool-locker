@@ -1,0 +1,35 @@
+generated = "2025-08-13T23:32:58.766322634Z"
+tlk_version = "0.1.0"
+schema = 3
+
+[tools.terraform]
+version = "1.12.2"
+requested_version = "^1.12.2"
+source = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip"
+source_template = "https://releases.hashicorp.com/terraform/{version}/terraform_{version}_{os}_{arch}.zip"
+platform = "linux-x86_64"
+digest = "af13e0da54d9d28373e89ace168e34d5de7bf54213355eef772ae8a81b372fa8"
+
+[tools.terraform.sources]
+windows-amd64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_windows_amd64.zip"
+windows-arm64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_windows_arm64.zip"
+linux-amd64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_amd64.zip"
+darwin-amd64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_darwin_amd64.zip"
+darwin-arm64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_darwin_arm64.zip"
+linux-arm64 = "https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_arm64.zip"
+
+[tools.helm]
+version = "3.18.5"
+requested_version = "^3.18.5"
+source = "https://get.helm.sh/helm-v3.18.5-linux-amd64.tar.gz"
+source_template = "https://get.helm.sh/helm-v{version}-{os}-{arch}.tar.gz"
+platform = "linux-x86_64"
+digest = "0f4167894a59151cc45564642ca1c7d22b251f46055cc96cf2b3f1fda8c22b97"
+
+[tools.helm.sources]
+linux-amd64 = "https://get.helm.sh/helm-v3.18.5-linux-amd64.tar.gz"
+windows-arm64 = "https://get.helm.sh/helm-v3.18.5-windows-arm64.tar.gz"
+darwin-arm64 = "https://get.helm.sh/helm-v3.18.5-darwin-arm64.tar.gz"
+darwin-amd64 = "https://get.helm.sh/helm-v3.18.5-darwin-amd64.tar.gz"
+linux-arm64 = "https://get.helm.sh/helm-v3.18.5-linux-arm64.tar.gz"
+windows-amd64 = "https://get.helm.sh/helm-v3.18.5-windows-amd64.tar.gz"

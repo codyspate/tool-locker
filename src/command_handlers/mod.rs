@@ -1,0 +1,9 @@
+pub mod dispatch;
+pub mod hook;
+pub mod install;
+pub mod migrate;
+pub mod diagnose;
+pub mod migrate_config;
+pub mod setup;
+pub mod specs;
+pub mod uninstall;
