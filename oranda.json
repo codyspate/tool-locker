@@ -1,0 +1,14 @@
+{
+    "project": {
+        "name": "tlk"
+    },
+    "styles": {
+        "theme": "hacker"
+    },
+    "components": {
+        "artifacts": {
+            "cargo_dist": true,
+            "auto": true
+        }
+    }
+}

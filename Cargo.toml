@@ -1,5 +1,6 @@
 [workspace.package]
-version = "0.1.1"
+name = "Tool Locker"
+version = "0.1.2"
 edition = "2021"
 authors = ["Cody Spate <cody@spate.dev>"]
 license = "MIT OR Apache-2.0"
@@ -8,6 +9,7 @@ repository = "https://github.com/codyspate/tool-locker"
 
 
 [workspace]
+name = "Tool Locker"
 members = ["cli"]
 
 
