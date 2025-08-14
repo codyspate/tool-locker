@@ -160,10 +160,10 @@ pub fn refresh_path() {
 pub fn render_source(tool: &Tool) -> String {
     let os = placeholder_os();
     let arch = placeholder_arch();
-    // May still contain placeholders for {os}/{arch}
     let template = tool.effective_source_template(os, arch);
+    let (exact, _req) = normalize_version(&tool.version);
     let base = template
-        .replace("{version}", &tool.version)
+        .replace("{version}", &exact)
         .replace("{os}", os)
         .replace("{arch}", arch);
     platform().adjust_direct_url(&base)
@@ -328,7 +328,7 @@ fn range_satisfies(range: &str, version: &str) -> bool {
 
 fn install_tool(client: &Client, tool: &Tool, pb: Option<&ProgressBar>) -> Result<()> {
     if let Ok(installed) = find_installed_version(tool) {
-        if installed == tool.version {
+        if should_skip_for_version(tool, &installed) {
             if let Some(p) = pb {
                 p.set_message(format!("{} already at {} (skip)", tool.name, installed));
             } else {
@@ -420,7 +420,14 @@ fn install_archive(client: &Client, tool: &Tool, pb: Option<&ProgressBar>) -> Re
         for entry in archive.entries()? {
             let mut e = entry?;
             let path = e.path()?;
-            if candidates.iter().any(|c| path.ends_with(c)) {
+            let path_str = path.to_string_lossy();
+            let file_name_match = path
+                .file_name()
+                .map(|f| f.to_string_lossy())
+                .unwrap_or_default();
+            if candidates.iter().any(|c| {
+                path.ends_with(c) || file_name_match == *c || path_str.ends_with(&format!("/{c}"))
+            }) {
                 let bin_path = install_dir.join(&target_bin_filename(tool));
                 let mut out = File::create(&bin_path)?;
                 std::io::copy(&mut e, &mut out)?;
@@ -439,7 +446,10 @@ fn install_archive(client: &Client, tool: &Tool, pb: Option<&ProgressBar>) -> Re
         for i in 0..zip.len() {
             let mut file = zip.by_index(i)?;
             let name = file.name().to_string();
-            if candidates.iter().any(|c| name.ends_with(c)) {
+            if candidates
+                .iter()
+                .any(|c| name.ends_with(c) || name.ends_with(&format!("/{c}")))
+            {
                 let bin_path = install_dir.join(&target_bin_filename(tool));
                 let mut out = File::create(&bin_path)?;
                 std::io::copy(&mut file, &mut out)?;
@@ -458,6 +468,17 @@ fn install_archive(client: &Client, tool: &Tool, pb: Option<&ProgressBar>) -> Re
         )));
     }
     Ok(())
+}
+
+fn should_skip_for_version(tool: &Tool, installed: &str) -> bool {
+    if is_range(&tool.version) {
+        if range_satisfies(&tool.version, installed) {
+            return true;
+        }
+    } else if installed == tool.version {
+        return true;
+    }
+    false
 }
 
 fn chmod_exec(path: &Path) -> Result<()> {

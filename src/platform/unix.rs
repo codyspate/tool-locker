@@ -17,7 +17,19 @@ impl PlatformOps for Unix {
         base.to_string()
     }
     fn candidate_archive_entry_names(&self, base: &str) -> Vec<String> {
-        vec![base.to_string()]
+        // Include base plus common nested patterns (e.g., linux-amd64/helm, darwin-arm64/gh)
+        let os = std::env::consts::OS;
+        let arch = match std::env::consts::ARCH {
+            "x86_64" => "amd64",
+            "aarch64" => "arm64",
+            other => other,
+        };
+        vec![
+            base.to_string(),
+            format!("{os}-{arch}/{base}"),
+            format!("{os}_{arch}/{base}"),
+            format!("bin/{base}"), // some archives have bin/
+        ]
     }
     fn adjust_direct_url(&self, url: &str) -> String {
         url.to_string()
