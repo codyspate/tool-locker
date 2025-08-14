@@ -7,6 +7,12 @@ repository.workspace = true
 license.workspace = true
 description.workspace = true
 
+[package.metadata.wix]
+upgrade-guid = "E553393A-D0F7-4A46-87A4-4BB9CAEE7F91"
+path-guid = "287EDCC6-5CB7-422D-8D7E-9DF00CA06688"
+license = false
+eula = false
+
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 anyhow = "1.0"

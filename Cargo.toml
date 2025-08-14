@@ -1,12 +1,14 @@
-[workspace]
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 authors = ["Cody Spate <cody@spate.dev>"]
 license = "MIT OR Apache-2.0"
 description = "Tool Locker (tlk): manage non-language specific tool binaries from tlk.toml"
 repository = "https://github.com/codyspate/tool-locker"
-members = ["cli"]
 
+
+[workspace]
+members = ["cli"]
 
 
 # The profile that 'dist' will build with
