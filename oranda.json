@@ -1,11 +1,16 @@
 {
     "project": {
-        "name": "tlk"
+        "name": "tlk",
+        "repository": "https://github.com/codyspate/tool-locker"
+    },
+    "build": {
+        "path_prefix": "tool-locker"
     },
     "styles": {
         "theme": "hacker"
     },
     "components": {
+        "changelog": true,
         "artifacts": {
             "cargo_dist": true,
             "auto": true
