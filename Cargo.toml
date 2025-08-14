@@ -1,50 +1,6 @@
-[package]
-name = "tlk"
-version = "0.1.0"
-edition = "2021"
-authors = ["Your Name <you@example.com>"]
-license = "MIT OR Apache-2.0"
-description = "Tool Locker (tlk): manage non-language specific tool binaries from tlk.toml"
-repository = "https://github.com/codyspate/tool-locker"
+[workspace]
+members = ["cli"]
 
-[dependencies]
-clap = { version = "4.5.4", features = ["derive"] }
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-serde_json = "1.0"
-toml = "0.8"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
-sha2 = "0.10"
-hex = "0.4"
-indicatif = "0.17"
-which = "6.0"
-semver = "1.0"
-thiserror = "1.0"
-fs-err = "2.11"
-zip = { version = "0.6", default-features = false, features = ["deflate"] }
-tar = "0.4"
-flate2 = "1.0"
-chrono = { version = "0.4", features = ["serde", "clock"] }
-regex = "1"
-once_cell = "1"
-dirs = "5"
-
-[[bin]]
-name = "tlk"
-
-# Config for 'dist'
-[workspace.metadata.dist]
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "aarch64-pc-windows-msvc", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
-# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.29.0"
-# CI backends to support
-ci = "github"
-# The installers to generate for each app
-installers = []
-
-# The installers to generate for each app
 # The profile that 'dist' will build with
 [profile.dist]
 inherits = "release"
