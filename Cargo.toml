@@ -10,6 +10,7 @@ repository = "https://github.com/codyspate/tool-locker"
 
 [workspace]
 name = "Tool Locker"
+resolver = "2"
 members = ["cli"]
 
 

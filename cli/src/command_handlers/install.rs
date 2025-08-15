@@ -68,25 +68,29 @@ pub fn run_install(args: InstallArgs) -> Result<()> {
             }
         }
     }
-    // Lock update in batch
+    // Always update tlk.toml with canonical spec (even if not writing lock) so subsequent installs know about the tool.
+    for (tool, per_spec_latest, original_spec) in &resolved {
+        let name = tool.name.clone();
+        if let Err(e) = crate::command_handlers::specs::canonicalize_spec_logging(
+            args.config_path,
+            &name,
+            if *per_spec_latest {
+                None
+            } else {
+                original_spec.as_deref()
+            },
+            &tool.version,
+            args.exact,
+            *per_spec_latest,
+        ) {
+            eprintln!("Warning: failed to update config for {}: {e}", name);
+        }
+    }
+    // Lock update only if requested
     if args.write_lock {
-        for (tool, per_spec_latest, original_spec) in &resolved {
-            let name = tool.name.clone();
+        for (tool, _per_spec_latest, _original_spec) in &resolved {
             if let Err(e) = ops::write_single_lock(tool) {
-                eprintln!("Warning: failed to update lock for {}: {e}", name);
-            } else if let Err(e) = crate::command_handlers::specs::canonicalize_spec_logging(
-                args.config_path,
-                &name,
-                if *per_spec_latest {
-                    None
-                } else {
-                    original_spec.as_deref()
-                },
-                &tool.version,
-                args.exact,
-                *per_spec_latest,
-            ) {
-                eprintln!("Warning: failed to update config for {}: {e}", name);
+                eprintln!("Warning: failed to update lock for {}: {e}", tool.name);
             }
         }
     }

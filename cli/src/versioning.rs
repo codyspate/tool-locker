@@ -27,6 +27,15 @@ pub fn fetch_all_versions(name: &str) -> Result<Vec<semver::Version>> {
         "gh" => fetch_github_list("cli", "cli")?,
         "buf" => fetch_github_list("bufbuild", "buf")?,
         "kubectl" => fetch_github_list("kubernetes", "kubernetes")?,
+        // Newly added / extended known tools
+        "node" => fetch_github_list("nodejs", "node")?,
+        "pnpm" => fetch_github_list("pnpm", "pnpm")?,
+        "yarn" => fetch_github_list("yarnpkg", "yarn")?,
+        "just" => fetch_github_list("casey", "just")?,
+        "jq" => fetch_jq_list()?,
+        "cosign" => fetch_github_list("sigstore", "cosign")?,
+        "age" => fetch_github_list("FiloSottile", "age")?,
+        "moon" => fetch_github_list("moonrepo", "moon")?,
         _ => return Err(anyhow::anyhow!("version listing unsupported for {name}")),
     };
     let mut parsed: Vec<semver::Version> = raw
@@ -60,12 +69,45 @@ fn fetch_github_list(owner: &str, repo: &str) -> Result<Vec<String>> {
     let mut out = Vec::new();
     if let Some(items) = arr.as_array() {
         for it in items {
-            if it.get("prerelease").and_then(|v| v.as_bool()).unwrap_or(false) {
+            if it
+                .get("prerelease")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
                 continue;
             }
             if let Some(tag) = it.get("tag_name").and_then(|v| v.as_str()) {
                 let norm = tag.trim_start_matches('v').to_string();
                 out.push(norm);
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    Ok(out)
+}
+
+// jq tags look like jq-1.7.1 (sometimes without standard semver prefix handling)
+fn fetch_jq_list() -> Result<Vec<String>> {
+    let url = "https://api.github.com/repos/jqlang/jq/releases?per_page=100";
+    let client = reqwest::blocking::Client::new();
+    let resp = client.get(url).header("User-Agent", "tlk").send()?;
+    let arr: serde_json::Value = resp.json()?;
+    let mut out = Vec::new();
+    if let Some(items) = arr.as_array() {
+        for it in items {
+            if it
+                .get("prerelease")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
+                continue;
+            }
+            if let Some(tag) = it.get("tag_name").and_then(|v| v.as_str()) {
+                // tag form: jq-1.7.1
+                if let Some(stripped) = tag.strip_prefix("jq-") {
+                    out.push(stripped.to_string());
+                }
             }
         }
     }

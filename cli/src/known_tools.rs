@@ -37,19 +37,37 @@ impl KnownToolDef {
 
 pub fn known_tools_map() -> HashMap<&'static str, KnownToolDef> {
     use ToolKind::*;
-    fn map_arch_for_node(a: &str) -> &str { match a { "amd64" => "x64", other => other } }
-    fn map_arch_for_pnpm(a: &str) -> &str { match a { "amd64" => "x64", other => other } }
+    fn map_arch_for_node(a: &str) -> &str {
+        match a {
+            "amd64" => "x64",
+            other => other,
+        }
+    }
+    fn map_arch_for_pnpm(a: &str) -> &str {
+        match a {
+            "amd64" => "x64",
+            other => other,
+        }
+    }
     fn node_source(version: &str) -> String {
         let os = detect_os();
         let arch = map_arch_for_node(detect_arch());
         // Windows uses win & .zip; others tar.gz. For now prefer unix patterns; extend later as needed.
-        if os == "windows" { format!("https://nodejs.org/dist/v{version}/node-v{version}-win-{arch}.zip") } else { format!("https://nodejs.org/dist/v{version}/node-v{version}-{os}-{arch}.tar.gz") }
+        if os == "windows" {
+            format!("https://nodejs.org/dist/v{version}/node-v{version}-win-{arch}.zip")
+        } else {
+            format!("https://nodejs.org/dist/v{version}/node-v{version}-{os}-{arch}.tar.gz")
+        }
     }
     fn pnpm_source(version: &str) -> String {
         let os_raw = detect_os();
         let arch = map_arch_for_pnpm(detect_arch());
         // Map OS to pnpm asset naming
-        let os = match os_raw { "darwin" => "macos", "windows" => "win", other => other };
+        let os = match os_raw {
+            "darwin" => "macos",
+            "windows" => "win",
+            other => other,
+        };
         let ext = if os == "win" { ".exe" } else { "" };
         // Use new standalone binary assets (linux uses "linuxstatic").
         let os_segment = if os == "linux" { "linuxstatic" } else { os };
@@ -66,26 +84,35 @@ pub fn known_tools_map() -> HashMap<&'static str, KnownToolDef> {
             ("windows", "amd64") => "x86_64-pc-windows-msvc",
             // fallback to generic naming (may not exist)
             (o, a) => {
-                return format!("https://github.com/casey/just/releases/download/v{version}/just-v{version}-{a}-{o}.tar.gz");
+                return format!("https://github.com/casey/just/releases/download/{version}/just-{version}-{a}-{o}.tar.gz");
             }
         };
         let ext = if os == "windows" { "zip" } else { "tar.gz" };
-        format!("https://github.com/casey/just/releases/download/v{version}/just-v{version}-{triple}.{ext}")
+        // just filenames omit the leading 'v' in the asset itself.
+        format!("https://github.com/casey/just/releases/download/{version}/just-{version}-{triple}.{ext}")
     }
     fn jq_source(version: &str) -> String {
         // jq uses jq-{os}-{arch}( .exe on windows), version directory is jq-{version}
         // Example: https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
         let os = detect_os();
         let arch = detect_arch();
-        let os_part = match os { "darwin" => "macos", other => other };
+        let os_part = match os {
+            "darwin" => "macos",
+            other => other,
+        };
         let ext = if os == "windows" { ".exe" } else { "" };
-        format!("https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_part}-{arch}{ext}")
+        format!(
+            "https://github.com/jqlang/jq/releases/download/jq-{version}/jq-{os_part}-{arch}{ext}"
+        )
     }
     fn cosign_source(version: &str) -> String {
         // Example: cosign-linux-amd64 at tag v2.x.y
         let os = detect_os();
         let arch = detect_arch();
-        let os_part = match os { "darwin" => "darwin", other => other }; // keep linux/windows unchanged
+        let os_part = match os {
+            "darwin" => "darwin",
+            other => other,
+        }; // keep linux/windows unchanged
         let ext = if os == "windows" { ".exe" } else { "" };
         format!("https://github.com/sigstore/cosign/releases/download/v{version}/cosign-{os_part}-{arch}{ext}")
     }
@@ -95,6 +122,30 @@ pub fn known_tools_map() -> HashMap<&'static str, KnownToolDef> {
         let arch = detect_arch();
         let ext = if os == "windows" { "zip" } else { "tar.gz" };
         format!("https://github.com/FiloSottile/age/releases/download/v{version}/age-v{version}-{os}-{arch}.{ext}")
+    }
+    fn moon_source(version: &str) -> String {
+        // moon publishes raw binaries (no version segment in filename) per target triple, e.g.:
+        //   moon-aarch64-apple-darwin
+        //   moon-x86_64-unknown-linux-gnu / -musl
+        //   moon-x86_64-pc-windows-msvc.exe
+        // Directory/tag still includes 'v{version}'.
+        #[cfg(target_env = "musl")]
+        const MOON_LIBC: &str = "musl";
+        #[cfg(not(target_env = "musl"))]
+        const MOON_LIBC: &str = "gnu";
+        let os = detect_os();
+        let arch = match detect_arch() {
+            "amd64" => "x86_64",
+            other => other,
+        };
+        let triple = match os {
+            "darwin" => format!("{arch}-apple-darwin"),
+            "linux" => format!("{arch}-unknown-linux-{libc}", libc = MOON_LIBC),
+            "windows" => format!("{arch}-pc-windows-msvc"),
+            other => format!("{arch}-{other}"),
+        };
+        let ext = if os == "windows" { ".exe" } else { "" };
+        format!("https://github.com/moonrepo/moon/releases/download/v{version}/moon-{triple}{ext}")
     }
     HashMap::from([
         ("terraform", KnownToolDef { kind: Archive, source: SourceSpec::Template("https://releases.hashicorp.com/terraform/{version}/terraform_{version}_{os}_{arch}.zip"), binary_rel: Some("terraform") }),
@@ -110,6 +161,7 @@ pub fn known_tools_map() -> HashMap<&'static str, KnownToolDef> {
         ("jq", KnownToolDef { kind: Direct, source: SourceSpec::Custom(jq_source), binary_rel: None }),
         ("cosign", KnownToolDef { kind: Direct, source: SourceSpec::Custom(cosign_source), binary_rel: None }),
         ("age", KnownToolDef { kind: Archive, source: SourceSpec::Custom(age_source), binary_rel: Some("age") }),
+    ("moon", KnownToolDef { kind: Direct, source: SourceSpec::Custom(moon_source), binary_rel: Some("moon") }),
     ])
 }
 
