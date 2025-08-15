@@ -12,8 +12,16 @@ It’s like a `package.json` + lock for the miscellaneous non-language CLIs you 
 
 ### 1. Install or build `tlk`
 
-Install latest release: https://github.com/codyspate/tool-locker/releases
+Download latest release and add to your path: https://github.com/codyspate/tool-locker/releases
 
+**Convienience Script**
+
+This script also installs a updater `tlk-update` to update `tlk` itself.
+ 
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/codyspate/tool-locker/releases/download/v0.1.6/tlk-installer.sh | sh
+
+```
 **Or Build:**
 
 ```bash
@@ -45,7 +53,7 @@ Commit both `tlk.toml` and `tlk.lock`.
 ---
 
 
-### 4. Restart shell and use yourt installed tools
+### 4. Restart shell and use your installed tools
 
 ```bash
 terraform --verison
@@ -100,7 +108,7 @@ Legacy `[[tools]]` array form is still accepted; run `tlk migrate-config` to upg
 
 ## Supported Shorthand Tools (built‑in recipes)
 
-`terraform`, `kubectl`, `helm`, `gh`, `buf`, `node`, `pnpm`, `yarn`, `just`, `jq`, `cosign`, `age`.
+`terraform`, `kubectl`, `helm`, `gh`, `buf`, `node`, `pnpm`, `yarn`, `just`, `jq`, `cosign`, `age`, `moon`.
 
 Each has logic for platform naming quirks (e.g. node’s x64 vs amd64) and implicit `binary` paths when they aren’t at archive root.
 
