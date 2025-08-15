@@ -77,34 +77,45 @@ fn default_kind() -> ToolKind {
 }
 
 impl TlkConfig {
-    pub fn load(path: &str) -> Result<Self> {
-        let data = fs::read_to_string(path).with_context(|| format!("reading config {path}"))?;
+    pub fn load(path: &str) -> Option<Self> {
+        let data = fs::read_to_string(path);
+        let data = match data {
+            Ok(d) => d,
+            Err(_) => return None,
+        };
         let value: toml::Value = match data.parse::<toml::Value>() {
             Ok(v) => v,
             Err(_) => {
                 if data.trim_start().starts_with('{') {
                     if let Ok(repaired) = repair_inline_root(&data) {
-                        std::fs::write(path, &repaired)?;
-                        repaired
+                        std::fs::write(path, &repaired).ok();
+
+                        let repaired_file = repaired
                             .parse::<toml::Value>()
-                            .with_context(|| "parsing tlk.toml after repair")?
+                            .with_context(|| "parsing tlk.toml after repair");
+                        if let Ok(v) = repaired_file {
+                            v
+                        } else {
+                            return None;
+                        }
                     } else {
-                        return Err(anyhow::anyhow!("parsing tlk.toml"));
+                        return None;
                     }
                 } else {
-                    return Err(anyhow::anyhow!("parsing tlk.toml"));
+                    return None;
                 }
             }
         };
         // Unknown (user-provided) tools from [[tools]] entries
-        let mut tools = parse_unknown(&value)?;
+        let tools = parse_unknown(&value);
+        let Ok(mut tools) = tools else { return None };
         let explicit_names: HashSet<String> = tools.iter().map(|t| t.name.clone()).collect();
         // Known shorthand single-line entries (terraform = "1.2.3")
         let mut shorthand = extract_shorthand(&value, &explicit_names);
         tools.append(&mut shorthand);
         augment_binary_fields(&mut tools);
 
-        Ok(TlkConfig { tools })
+        Some(TlkConfig { tools })
     }
 }
 

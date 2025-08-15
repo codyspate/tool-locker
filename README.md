@@ -10,7 +10,7 @@ It’s like a `package.json` + lock for the miscellaneous non-language CLIs you 
 
 ## Quick Start
 
-### 1. Build or obtain `tlk`
+### 1. Install or build `tlk`
 
 Install latest release: https://github.com/codyspate/tool-locker/releases
 
@@ -23,32 +23,16 @@ cargo build --release
 ./target/release/tlk --help
 ```
 
-Place the binary somewhere on your PATH or just run it from the repo.
 
-### 2. Add a `tlk.toml` to your project
-
-```toml
-terraform = "^1.8.5"
-kubectl = "1.30.2"         # exact version
-helm = "^3.15.2"           # range (caret)
-just = "latest"            # will resolve to current latest at install time
-
-[tools.protoc]              # custom tool form
-version = "24.4"
-source = "https://github.com/protocolbuffers/protobuf/releases/download/v{version}/protoc-{version}-linux-x86_64.zip"
-kind = "archive"
-binary = "bin/protoc"
-```
-
-### 3. Install
+### 2. Install a tool
 
 ```bash
-tlk install
+tlk install terraform
 ```
 
 Creates `.tlk/bin` and downloads each tool (parallelized when >1). Writes / updates `tlk.lock` with exact versions and fully rendered URLs.
 
-### 4. Auto‑activate PATH (optional but nice)
+### 3. Auto‑activate PATH (optional but nice)
 
 ```bash
 eval "$(tlk hook)"   # bash / zsh
@@ -60,6 +44,12 @@ Commit both `tlk.toml` and `tlk.lock`.
 
 ---
 
+
+### 4. Restart shell and use yourt installed tools
+
+```bash
+terraform --verison
+```
 
 ## Why (Problems This Solves)
 

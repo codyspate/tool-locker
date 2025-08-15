@@ -15,23 +15,32 @@ use std::process::Command;
 use tar::Archive;
 use zip::ZipArchive;
 
-pub fn plan(cfg: &TlkConfig) -> Result<()> {
-    for t in &cfg.tools {
-        println!("{} {} -> {}", t.name, t.version, t.source);
+pub fn plan(cfg: Option<&TlkConfig>) -> Result<()> {
+    if let Some(cfg) = cfg {
+        for t in &cfg.tools {
+            println!("{} {} -> {}", t.name, t.version, t.source);
+        }
     }
     Ok(())
 }
 
-pub fn list(cfg: &TlkConfig) -> Result<()> {
-    for t in &cfg.tools {
-        let installed = find_installed_version(t).unwrap_or_else(|_| "<not installed>".to_string());
-        println!("{} desired={} installed={}", t.name, t.version, installed);
+pub fn list(cfg: Option<&TlkConfig>) -> Result<()> {
+    if let Some(cfg) = cfg {
+        for t in &cfg.tools {
+            let installed =
+                find_installed_version(t).unwrap_or_else(|_| "<not installed>".to_string());
+            println!("{} desired={} installed={}", t.name, t.version, installed);
+        }
     }
     Ok(())
 }
 
-pub fn install_all(cfg: &TlkConfig) -> Result<()> {
+pub fn install_all(cfg: Option<&TlkConfig>) -> Result<()> {
+    let Some(cfg) = cfg else {
+        return Ok(());
+    };
     // Use parallel strategy for speed; fall back to sequential if only one
+
     if cfg.tools.len() <= 1 {
         return install_all_sequential(cfg);
     }
@@ -169,7 +178,12 @@ pub fn render_source(tool: &Tool) -> String {
     platform().adjust_direct_url(&base)
 }
 
-pub fn write_lockfile(cfg: &TlkConfig, path: &str) -> Result<()> {
+pub fn write_lockfile(cfg: Option<&TlkConfig>, path: &str) -> Result<()> {
+    let Some(cfg) = cfg else {
+        return Err(anyhow::anyhow!(
+            "No config provided for lockfile generation"
+        ));
+    };
     use std::collections::HashMap;
     let mut map: HashMap<String, crate::lock::LockedEntry> = HashMap::new();
     for t in &cfg.tools {
@@ -195,7 +209,10 @@ pub fn write_lockfile(cfg: &TlkConfig, path: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn verify_lockfile(cfg: &TlkConfig, path: &str) -> Result<()> {
+pub fn verify_lockfile(cfg: Option<&TlkConfig>, path: &str) -> Result<()> {
+    let Some(cfg) = cfg else {
+        return Err(anyhow::anyhow!("No config provided for lock verification"));
+    };
     let Some(lock) = LockFile::load(path)? else {
         println!("No {path} present; run 'tlk install' to create it.");
         return Ok(());

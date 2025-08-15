@@ -1,9 +1,9 @@
 use crate::cli::Commands;
-use crate::command_handlers::{hook, install, setup, uninstall, migrate, diagnose, migrate_config};
+use crate::command_handlers::{diagnose, hook, install, migrate, migrate_config, setup, uninstall};
 use crate::config::TlkConfig;
 use anyhow::Result;
 
-pub fn dispatch(cmd: Commands, cfg: &TlkConfig, config_path: &str) -> Result<()> {
+pub fn dispatch(cmd: Commands, cfg: Option<&TlkConfig>, config_path: &str) -> Result<()> {
     match cmd {
         Commands::Install {
             no_lock,
@@ -41,13 +41,11 @@ pub fn dispatch(cmd: Commands, cfg: &TlkConfig, config_path: &str) -> Result<()>
         }
         Commands::Setup { apply } => setup::setup_flow(apply),
         Commands::Hook { shell } => hook::print_hook(shell.as_deref()),
-    Commands::MigrateLock => migrate::migrate_lock(cfg, "tlk.lock"),
-    Commands::MigrateConfig => migrate_config::migrate_config(config_path),
-    Commands::Diagnose { lock, kind } => {
-        match kind.as_str() {
+        Commands::MigrateLock => migrate::migrate_lock(cfg, "tlk.lock"),
+        Commands::MigrateConfig => migrate_config::migrate_config(config_path),
+        Commands::Diagnose { lock, kind } => match kind.as_str() {
             "missing-platforms" => diagnose::list_missing(&lock),
             other => anyhow::bail!("unknown diagnose kind '{other}'"),
-        }
-    }
+        },
     }
 }

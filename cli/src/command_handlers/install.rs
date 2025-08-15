@@ -9,7 +9,7 @@ pub struct InstallArgs<'a> {
     pub specs: &'a [String],
     pub exact: bool,
     pub config_path: &'a str,
-    pub cfg: &'a TlkConfig,
+    pub cfg: Option<&'a TlkConfig>,
 }
 
 pub fn run_install(args: InstallArgs) -> Result<()> {
@@ -24,21 +24,72 @@ pub fn run_install(args: InstallArgs) -> Result<()> {
         return Ok(());
     }
     if args.specs.is_empty() {
-        if !args.write_lock && !args.no_verify { installer::verify_lockfile(args.cfg, "tlk.lock")?; }
+        if !args.write_lock && !args.no_verify {
+            installer::verify_lockfile(args.cfg, "tlk.lock")?;
+        }
         installer::install_all(args.cfg)?;
-        if args.write_lock { installer::write_lockfile(args.cfg, "tlk.lock")?; }
+        if args.write_lock {
+            installer::write_lockfile(args.cfg, "tlk.lock")?;
+        }
         return Ok(());
     }
     // Resolve requested known tools (currently only known-tool path supported for multi-spec)
     let mut resolved = Vec::new();
-    for spec in args.specs { let (name, ver_opt) = parse_spec(spec)?; let per_spec_latest = ver_opt.is_none() || ver_opt.as_deref() == Some("latest"); let version = if let Some(v) = &ver_opt { if v == "latest" { versioning::fetch_latest(&name)? } else { resolve_version(&name, v)? } } else { versioning::fetch_latest(&name)? }; let tool = crate::known_tools::build_known_tool(&name, &version)?; resolved.push((tool, per_spec_latest, ver_opt.clone())); }
+    for spec in args.specs {
+        let (name, ver_opt) = parse_spec(spec)?;
+        let per_spec_latest = ver_opt.is_none() || ver_opt.as_deref() == Some("latest");
+        let version = if let Some(v) = &ver_opt {
+            if v == "latest" {
+                versioning::fetch_latest(&name)?
+            } else {
+                resolve_version(&name, v)?
+            }
+        } else {
+            versioning::fetch_latest(&name)?
+        };
+        let tool = crate::known_tools::build_known_tool(&name, &version)?;
+        resolved.push((tool, per_spec_latest, ver_opt.clone()));
+    }
     // Parallel install
     let tools_only: Vec<_> = resolved.iter().map(|(t, _, _)| t.clone()).collect();
     let results = installer::install_tools_parallel(&tools_only);
     // Report using earlier collected metadata
-    for (tool, per_spec_latest, _) in &resolved { let success = results.iter().find(|(n,_ )| n == &tool.name).map(|(_, r)| r.is_ok()).unwrap_or(false); if success { if !args.exact && !per_spec_latest { println!("Installed {} {} (non-exact)", tool.name, tool.version); } else { println!("Installed {} {}", tool.name, tool.version); } } }
+    for (tool, per_spec_latest, _) in &resolved {
+        let success = results
+            .iter()
+            .find(|(n, _)| n == &tool.name)
+            .map(|(_, r)| r.is_ok())
+            .unwrap_or(false);
+        if success {
+            if !args.exact && !per_spec_latest {
+                println!("Installed {} {} (non-exact)", tool.name, tool.version);
+            } else {
+                println!("Installed {} {}", tool.name, tool.version);
+            }
+        }
+    }
     // Lock update in batch
-    if args.write_lock { for (tool, per_spec_latest, original_spec) in &resolved { let name = tool.name.clone(); if let Err(e) = ops::write_single_lock(tool) { eprintln!("Warning: failed to update lock for {}: {e}", name); } else if let Err(e) = crate::command_handlers::specs::canonicalize_spec_logging(args.config_path, &name, if *per_spec_latest { None } else { original_spec.as_deref() }, &tool.version, args.exact, *per_spec_latest) { eprintln!("Warning: failed to update config for {}: {e}", name); } } }
+    if args.write_lock {
+        for (tool, per_spec_latest, original_spec) in &resolved {
+            let name = tool.name.clone();
+            if let Err(e) = ops::write_single_lock(tool) {
+                eprintln!("Warning: failed to update lock for {}: {e}", name);
+            } else if let Err(e) = crate::command_handlers::specs::canonicalize_spec_logging(
+                args.config_path,
+                &name,
+                if *per_spec_latest {
+                    None
+                } else {
+                    original_spec.as_deref()
+                },
+                &tool.version,
+                args.exact,
+                *per_spec_latest,
+            ) {
+                eprintln!("Warning: failed to update config for {}: {e}", name);
+            }
+        }
+    }
     Ok(())
 }
 

@@ -1,10 +1,10 @@
-use anyhow::Result;
 use crate::config::TlkConfig;
+use anyhow::Result;
 
 pub fn uninstall_tool(config_path: &str, name: &str) -> Result<()> {
     use std::fs;
     let p = crate::platform::platform();
-    if let Ok(cfg) = TlkConfig::load(config_path) {
+    if let Some(cfg) = TlkConfig::load(config_path) {
         if let Some(tool) = cfg.tools.iter().find(|t| t.name == name) {
             let dir = tool
                 .install_dir
@@ -36,7 +36,11 @@ fn remove_from_config(path: &str, name: &str) -> Result<()> {
     let data = fs::read_to_string(path)?;
     let mut root: toml::Value = data.parse()?;
     if let toml::Value::Table(tbl) = &mut root {
-        if let Some(v) = tbl.get(name) { if v.is_str() { tbl.remove(name); } }
+        if let Some(v) = tbl.get(name) {
+            if v.is_str() {
+                tbl.remove(name);
+            }
+        }
         if let Some(arr) = tbl.get_mut("tools") {
             if let toml::Value::Array(items) = arr {
                 items.retain(|it| !(it.get("name").and_then(|v| v.as_str()) == Some(name)));
